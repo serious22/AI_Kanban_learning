@@ -1,0 +1,5 @@
+[
+  {"title": "Review yesterday's cold-call numbers", "description": "Connect rate, engagements per caller, anything off-trend.", "task_type": "ops", "days": ["mon", "tue", "wed", "thu", "fri"]},
+  {"title": "Draft this week's LinkedIn post", "description": "Pick the next post from the 90-day calendar and draft it in my voice.", "task_type": "writing", "days": ["sat"]},
+  {"title": "Weekly CRM client follow-up check", "description": "Which clients haven't actioned new engagements?", "task_type": "ops", "days": ["mon"]}
+]
