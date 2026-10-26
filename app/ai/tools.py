@@ -3,8 +3,27 @@ from app import store
 from app.models import Card
 
 # ── Topic 1: starter tools ────────────────────────────────────────────────
-ADD_COMMENT: dict = {}      # name, description, input_schema {text}
-FINISH_TASK: dict = {}      # deliverable, steps_done[], open_questions[], needs_external_action (NO confidence field)
+ADD_COMMENT: dict = {
+    "name" : ""
+    "description":""
+    "input_schema":{"type": "object",
+                   "properties": {"text": {"type": "string"}}, "required": ["text"]}
+}      # name, description, input_schema {text}
+FINISH_TASK: dict = {
+    "name": "finish_task",
+    "description": "Call exactly once when you've done all you can. Report facts, not confidence.",
+    "type": "object",
+    "properties": {
+      "deliverable":    {"type": "string"},
+      "steps_done":     {"type": "array", "items": {"type": "string"}},
+      "open_questions": {"type": "array", "items": {"type": "string"},
+                         "description": "Anything unresolved or assumed. Empty if none."},
+      "needs_external_action": {"type": "boolean",
+                         "description": "True if a human must send, pay, publish or approve"}
+    },
+    "required": ["deliverable", "steps_done", "open_questions", "needs_external_action"]
+
+}      # deliverable, steps_done[], open_questions[], needs_external_action (NO confidence field)
 
 # ── Topic 6: work tools (sharp descriptions: what / returns / when-vs-alternative / limits)
 SEARCH_WEB: dict = {}
@@ -26,13 +45,25 @@ def execute_tool(card: Card, block, state: dict) -> str:
 
 
 def make_tool_handler(card: Card, state: dict):
-    """Topic 1 (+ Topic 5 hooks). Return handle_tools(blocks) -> list[tool_result dict].
-
-    For each block: pre_tool_use gate (Topic 5) -> execute_tool -> post_tool_use.
-    Every tool_use gets exactly one tool_result with the matching tool_use_id.
-    Exceptions become {"is_error": True, "content": "Error: ..."}.
-    """
-    raise NotImplementedError("Topic 1: make_tool_handler")
+    def make_tool_handler(card, state):
+    def handle_tools(blocks):                                   # ②
+        results = []
+        for b in blocks:
+            try:
+                if b.name == "add_comment":
+                    store.add_comment(card.id, "AI", b.input["text"])
+                    out = "Comment posted."
+                elif b.name == "finish_task":
+                    state["result"] = b.input                   # ③
+                    out = "Result recorded. You can stop now."
+                else:
+                    raise ValueError(f"Unknown tool: {b.name}")
+                results.append({"type": "tool_result", "tool_use_id": b.id, "content": out})
+            except Exception as e:                              # ④
+                results.append({"type": "tool_result", "tool_use_id": b.id,
+                                "content": f"Error: {e}", "is_error": True})
+        return results
+    return handle_tools
 
 
 def make_basic_handler():

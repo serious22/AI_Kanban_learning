@@ -12,4 +12,19 @@ def build_task_prompt(card: Card) -> str:
     (author + timestamp), wrapped in XML tags. Tell Claude later comments win
     on conflict and that it must finish by calling finish_task exactly once.
     """
-    raise NotImplementedError("Topic 1: build_task_prompt")
+    comments = "\n".join(                                   # ①
+        f'<comment n="{i}" author="{c.author}" at="{c.created_at}">{c.text}</comment>'
+        for i, c in enumerate(card.comments, 1)
+    )
+    return f"""<task>
+<title>{card.title}</title>
+<type>{card.task_type or "general"}</type>
+<description>{card.description}</description>
+<comments>
+{comments}
+</comments>
+</task>
+
+Do this task. Later comments override earlier ones if they conflict.   # ②
+Post short progress notes with add_comment.
+When finished, call finish_task exactly once."""  
